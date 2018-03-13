@@ -24,3 +24,15 @@ for eachNode in d['edges']:
     is_video = eachNode['node']['is_video']
     owner = eachNode['node']['owner']['id']
     print(owner)
+
+
+# data = json.loads(however_youre_getting_the_data('https://www.instagram.com/explore/tags/plebiscito/?__a=1&max_id={}'.format(end_cursors[-1])))
+
+
+## write a function using the shortcode of an image and looking up the username
+# https://www.instagram.com/p/{SHORTCODE}/?__a=1
+# https://www.instagram.com/smena8m/?__a=1 <-- if you have the UID
+
+## maybe i'll make a postgres database to put it in
+
+# then i need to update it once in a while with all users and number of followers
