@@ -16,6 +16,7 @@ with open('file.txt', 'w') as file:
 
 for eachNode in d['edges']:
     comment = eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text']
+    ## i also need the description since that is where the #'s live msot likely
     taken_at_timestamp = eachNode['node']['taken_at_timestamp']
     height = eachNode['node']['dimensions']['height']
     width = eachNode['node']['dimensions']['width']
@@ -23,7 +24,7 @@ for eachNode in d['edges']:
     likes = eachNode['node']['edge_liked_by']
     is_video = eachNode['node']['is_video']
     owner = eachNode['node']['owner']['id']
-    print(owner)
+    print(eachNode)
 
 
 # data = json.loads(however_youre_getting_the_data('https://www.instagram.com/explore/tags/plebiscito/?__a=1&max_id={}'.format(end_cursors[-1])))

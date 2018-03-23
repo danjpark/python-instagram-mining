@@ -9,7 +9,6 @@ def db_connection():
         config = json.load(f)
     return create_engine(URL(**config))
 
-
 engine = db_connection()
 df = pd.read_sql("SELECT * FROM test_table", engine)
 
