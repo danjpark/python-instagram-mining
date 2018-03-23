@@ -2,29 +2,42 @@ import requests
 import re
 import json
 
-tag = 'cavapoo'
-url_string = "https://www.instagram.com/explore/tags/%s/?__a=1" % tag
+def grab_hashtag(hashtag):
+    #define the return array
+    ret_array = []
 
-req = requests.get(url_string).json()
-d = req['graphql']['hashtag']['edge_hashtag_to_media']
+    #define the string we need to ping
+    url_string = "https://www.instagram.com/explore/tags/%s/?__a=1" % hashtag
 
-print(len(d['edges']))
+    #we get the responsein json
+    req = requests.get(url_string).json()
 
-with open('file.txt', 'w') as file:
-    # file.write(soup.prettify())
-    file.write(json.dumps(req))
+    #the only part we care about is this part
+    d = req['graphql']['hashtag']['edge_hashtag_to_media']
 
-for eachNode in d['edges']:
-    comment = eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text']
-    ## i also need the description since that is where the #'s live msot likely
-    taken_at_timestamp = eachNode['node']['taken_at_timestamp']
-    height = eachNode['node']['dimensions']['height']
-    width = eachNode['node']['dimensions']['width']
-    display_url = eachNode['node']['display_url']
-    likes = eachNode['node']['edge_liked_by']
-    is_video = eachNode['node']['is_video']
-    owner = eachNode['node']['owner']['id']
-    print(eachNode)
+    #write the entire response into a file
+    with open('file.txt', 'w') as file:
+        # file.write(soup.prettify())
+        file.write(json.dumps(req))
+
+    for eachNode in d['edges']:
+        if not eachNode['node']['is_video']:
+            ret_array.append({
+                'description': eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text'],
+                'taken_at_timestamp' : eachNode['node']['taken_at_timestamp'],
+                'height' : eachNode['node']['dimensions']['height'],
+                'width' : eachNode['node']['dimensions']['width'],
+                'display_url' : eachNode['node']['display_url'],
+                'likes' : eachNode['node']['edge_liked_by'],
+                'owner_id' : eachNode['node']['owner']['id'],
+                'shortcode':  eachNode['node']['shortcode'],
+            })
+            ## i also need the comment since that is where the #'s live msot likely
+            ## looks like comment doesnt live in this call. we need to make another call
+            ## using the shortcode
+    return ret_array
+
+print(len(grab_hashtag('cavapoo')))
 
 
 # data = json.loads(however_youre_getting_the_data('https://www.instagram.com/explore/tags/plebiscito/?__a=1&max_id={}'.format(end_cursors[-1])))
