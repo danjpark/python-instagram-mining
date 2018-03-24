@@ -42,7 +42,7 @@ def grab_hashtag(hashtag):
                         'height' : eachNode['node']['dimensions']['height'],
                         'width' : eachNode['node']['dimensions']['width'],
                         'display_url' : eachNode['node']['display_url'],
-                        'likes' : eachNode['node']['edge_liked_by'],
+                        'likes' : eachNode['node']['edge_liked_by']['count'],
                         'owner_id' : eachNode['node']['owner']['id'],
                         'shortcode':  eachNode['node']['shortcode'],
                     })
@@ -53,16 +53,18 @@ def grab_hashtag(hashtag):
         req = requests.get(url_string).json()
         d = req['graphql']['hashtag']['edge_hashtag_to_media']
 
-    return ret_array
+    return pd.DataFrame(ret_array)
 
 def write_to_table(df, table_name):
+    engine = db_connection()
+
     df.to_sql(table_name,
-              db_connection(),
+              engine,
               if_exists='append',
               index=False)
 
 
-print(len(grab_hashtag('cavadoodle')))
+write_to_table(grab_hashtag('cavadoodle'), 'danpark')
 
 
 ## i also need the comment since that is where the #'s live msot likely
