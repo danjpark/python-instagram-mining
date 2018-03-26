@@ -46,6 +46,9 @@ def grab_hashtag(hashtag):
                         'owner_id' : eachNode['node']['owner']['id'],
                         'shortcode':  eachNode['node']['shortcode'],
                     })
+                    if not eachNode['node']['comments_disabled']:
+                        # TODO : figure out how to get all the comments_disabled
+                        pass
                 except:
                     pass
         url_string = "https://www.instagram.com/explore/tags/%s/?__a=1&max_id=%s" \
