@@ -11,6 +11,15 @@ def db_connection():
         config = json.load(f)
     return create_engine(URL(**config))
 
+def extract_hashtags(comments):
+    ret_array = []
+    for eachNode in comments:
+        foo = eachNode['node']['text'].split(' ')
+        for eachWord in foo:
+            if eachWord.startswith('#'):
+                ret_array.append(eachWord)
+    return ret_array
+
 def grab_hashtag(hashtag):
     #define the return array
     ret_array = []
@@ -25,17 +34,21 @@ def grab_hashtag(hashtag):
     #     # file.write(soup.prettify())
     #     file.write(json.dumps(req))
 
-    print(d['count'])
-
     while(d['page_info']['has_next_page']):
 
-        print(len(ret_array))
-        if len(ret_array) > 1000:
-            break
+        #for the time being, lets limit this to 1000
+        if len(ret_array) > 1000: break
 
         for eachNode in d['edges']:
             if not eachNode['node']['is_video']:
                 try:
+                    if not eachNode['node']['comments_disabled']:
+                        shortcode_url = 'https://www.instagram.com/p/%s/?__a=1' % \
+                                        (eachNode['node']['shortcode'])
+                        req = requests.get(shortcode_url).json()
+                        if req['graphql']['shortcode_media']['edge_media_to_comment']['count'] > 0:
+                            extract_hashtags(req['graphql']['shortcode_media']['edge_media_to_comment']['edges'])
+                        pass
                     ret_array.append({
                         'description': eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text'],
                         'taken_at_timestamp' : eachNode['node']['taken_at_timestamp'],
@@ -46,9 +59,7 @@ def grab_hashtag(hashtag):
                         'owner_id' : eachNode['node']['owner']['id'],
                         'shortcode':  eachNode['node']['shortcode'],
                     })
-                    if not eachNode['node']['comments_disabled']:
-                        # TODO : figure out how to get all the comments_disabled
-                        pass
+
                 except:
                     pass
         url_string = "https://www.instagram.com/explore/tags/%s/?__a=1&max_id=%s" \
@@ -67,7 +78,8 @@ def write_to_table(df, table_name):
               index=False)
 
 
-write_to_table(grab_hashtag('cavadoodle'), 'danpark')
+write_to_table(grab_hashtag('cavadoodle'),
+               'danpark')
 
 
 ## i also need the comment since that is where the #'s live msot likely
