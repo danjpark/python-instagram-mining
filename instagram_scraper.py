@@ -30,7 +30,7 @@ def extract_hashtags(extraction, type):
                     ret_array.append(eachWord)
     return ret_array
 
-def grab_hashtag(hashtag):
+def grab_data(hashtag):
     #define the return array
     ret_array = []
 
@@ -71,7 +71,7 @@ def grab_hashtag(hashtag):
                     })
 
                 except Exception as e:
-                    print("######## ERROR #############",e)
+                    print("######## ERROR #############\n",e)
 
 
         # still in while loop, now we refresh the page
@@ -92,7 +92,7 @@ def write_to_table(df, table_name):
               index=False)
 
 
-write_to_table(grab_hashtag('cavadoodle'),
+write_to_table(grab_data('cavadoodle'),
                'danpark')
 
 
@@ -105,3 +105,5 @@ write_to_table(grab_hashtag('cavadoodle'),
 ## write a function using the shortcode of an image and looking up the username
 # https://www.instagram.com/p/{SHORTCODE}/?__a=1
 # https://www.instagram.com/smena8m/?__a=1 <-- if you have the UID
+
+##figure out how to update a row
