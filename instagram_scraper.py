@@ -121,8 +121,8 @@ def get_users(src_table):
         owner_info['following'] = username_req['graphql']['user']['edge_follow']['count']
 
         ret_array.append(owner_info)
-        print(owner_info)
 
+    return(pd.DataFrame(own))
 
 
 # write_to_table(grab_data('cavadoodle'),'danpark')
