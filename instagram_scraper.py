@@ -103,7 +103,9 @@ def get_users(src_table):
                                      headers = {'user-agent': 'custom'}).json()
 
         owner_info = shortcode_req['graphql']['shortcode_media']['owner']
-        print(owner_info)
+
+        if owner_info['id'] in list_of_ids: continue
+        list_of_ids.append(owner_info['id'])
         for key in ['blocked_by_viewer',
                     'followed_by_viewer',
                     'has_blocked_viewer',
@@ -119,6 +121,7 @@ def get_users(src_table):
         owner_info['following'] = username_req['graphql']['user']['edge_follow']['count']
 
         ret_array.append(owner_info)
+        print(owner_info)
 
 
 
