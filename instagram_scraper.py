@@ -2,6 +2,7 @@ import re
 import requests
 import json
 import pandas as pd
+import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
@@ -30,12 +31,13 @@ def extract_hashtags(extraction, type):
     return ret_array
 
 def grab_data(hashtag):
+    print('working in #', hashtag, '...', sep='')
+
     #define the return array
     ret_array = []
 
     #define the string we need to ping
     url_string = "https://www.instagram.com/explore/tags/%s/?__a=1" % (hashtag)
-    print(url_string)
     req = requests.get(url_string, headers={'user-agent': 'custom'}).json()
     d = req['graphql']['hashtag']['edge_hashtag_to_media']
 
@@ -46,17 +48,16 @@ def grab_data(hashtag):
             if not eachNode['node']['is_video']:
                 try:
                     # first we grab all the hashtags from the comments
-                    if not eachNode['node']['comments_disabled']:
-                        shortcode_url = 'https://www.instagram.com/p/%s/?__a=1' % (eachNode['node']['shortcode'])
-                        shortcode_req = requests.get(shortcode_url).json()
-                        if shortcode_req['graphql']['shortcode_media']['edge_media_to_comment']['count'] > 0:
-                            comment_hashtags = extract_hashtags(shortcode_req['graphql']['shortcode_media']['edge_media_to_comment']['edges'], 'comments')
+                    shortcode_url = 'https://www.instagram.com/p/%s/?__a=1' % (eachNode['node']['shortcode'])
+                    shortcode_req = requests.get(shortcode_url, headers={'user-agent': 'custom'}).json()
+                    if shortcode_req['graphql']['shortcode_media']['edge_media_to_comment']['count'] > 0:
+                        comment_hashtags = extract_hashtags(shortcode_req['graphql']['shortcode_media']['edge_media_to_comment']['edges'], 'comments')
                     caption_hashtags = extract_hashtags(eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text'], 'string')
                     hashtags = comment_hashtags + caption_hashtags
 
                     # second we grab all the hashtags from the description (aka caption)
                     ret_array.append({
-                        'taken_at_timestamp' : eachNode['node']['taken_at_timestamp'],
+                        'taken_at_timestamp' : datetime.datetime.fromtimestamp(eachNode['node']['taken_at_timestamp']),
                         'height' : eachNode['node']['dimensions']['height'],
                         'width' : eachNode['node']['dimensions']['width'],
                         'display_url' : eachNode['node']['display_url'],
@@ -81,13 +82,48 @@ def grab_data(hashtag):
 
 def write_to_table(df, table_name):
     engine = db_connection()
-
     df.to_sql(table_name,
               engine,
               if_exists='append',
               index=False)
 
-write_to_table(grab_data('cavadoodle'),'danpark')
+def get_users(src_table):
+    # move all the shortcodes into a temp table
+    # then go thru each shortcode and mine the username
+    # then get the username, then at the end, push it all to the database
+    engine = db_connection()
+    list_of_shortcodes = pd.read_sql('SELECT shortcode FROM %s' % src_table, engine)
+    ret_array = []
+    list_of_ids = []
+
+    for shortcode_tuple in list_of_shortcodes.itertuples():
+        shortcode = shortcode_tuple[1]
+        shortcode_url = 'https://www.instagram.com/p/%s/?__a=1' % (shortcode)
+        shortcode_req = requests.get(shortcode_url,
+                                     headers = {'user-agent': 'custom'}).json()
+
+        owner_info = shortcode_req['graphql']['shortcode_media']['owner']
+        print(owner_info)
+        for key in ['blocked_by_viewer',
+                    'followed_by_viewer',
+                    'has_blocked_viewer',
+                    'is_unpublished',
+                    'requested_by_viewer']:
+            owner_info.pop(key, None)
+
+        username = owner_info['username']
+        username_url = 'https://www.instagram.com/%s/?__a=1' % (username)
+        username_req = requests.get(username_url,
+                                 headers = {'user-agent': 'custom'}).json()
+        owner_info['followers'] = username_req['graphql']['user']['edge_followed_by']['count']
+        owner_info['following'] = username_req['graphql']['user']['edge_follow']['count']
+
+        ret_array.append(owner_info)
+
+
+
+# write_to_table(grab_data('cavadoodle'),'danpark')
+get_users('danpark')
 
 
 ## TODO:
@@ -101,3 +137,6 @@ write_to_table(grab_data('cavadoodle'),'danpark')
 # https://www.instagram.com/smena8m/?__a=1 <-- if you have the UID
 
 ##figure out how to update a row
+
+## TODO when mining data, make sure the shortcode doesnt already exist in the df
+## before shoving it into the db
