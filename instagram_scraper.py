@@ -3,7 +3,6 @@ import requests
 import json
 import pandas as pd
 
-
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 
@@ -36,6 +35,7 @@ def grab_data(hashtag):
 
     #define the string we need to ping
     url_string = "https://www.instagram.com/explore/tags/%s/?__a=1" % (hashtag)
+    print(url_string)
     req = requests.get(url_string).json()
     d = req['graphql']['hashtag']['edge_hashtag_to_media']
 
@@ -53,10 +53,6 @@ def grab_data(hashtag):
                             comment_hashtags = extract_hashtags(shortcode_req['graphql']['shortcode_media']['edge_media_to_comment']['edges'], 'comments')
                     caption_hashtags = extract_hashtags(eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text'], 'string')
                     hashtags = comment_hashtags + caption_hashtags
-
-                    if eachNode['node']['shortcode'] == 'Bgw3fcdnBLw':
-                        print(eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text'])
-                        print(hashtags)
 
                     # second we grab all the hashtags from the description (aka caption)
                     ret_array.append({
@@ -91,9 +87,7 @@ def write_to_table(df, table_name):
               if_exists='append',
               index=False)
 
-
-write_to_table(grab_data('cavadoodle'),
-               'danpark')
+write_to_table(grab_data('cavadoodle'),'danpark')
 
 
 ## TODO:
