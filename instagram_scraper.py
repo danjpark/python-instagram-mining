@@ -36,7 +36,7 @@ def grab_data(hashtag):
     #define the string we need to ping
     url_string = "https://www.instagram.com/explore/tags/%s/?__a=1" % (hashtag)
     print(url_string)
-    req = requests.get(url_string).json()
+    req = requests.get(url_string, headers={'user-agent': 'custom'}).json()
     d = req['graphql']['hashtag']['edge_hashtag_to_media']
 
     while(d['page_info']['has_next_page']):
