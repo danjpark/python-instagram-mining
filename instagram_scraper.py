@@ -109,7 +109,7 @@ def get_users(src_table):
         for key in ['blocked_by_viewer',
                     'followed_by_viewer',
                     'has_blocked_viewer',
-                    'is_unpublished',
+                    'is_unpublished', 
                     'requested_by_viewer']:
             owner_info.pop(key, None)
 
