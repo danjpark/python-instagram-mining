@@ -21,7 +21,6 @@ def write_to_table(df, table_name, id_column):
     # make sure the ids dont exist already in db
     does_exists = pd.read_sql("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s');" % table_name, engine)
     if does_exists['exists'][0]:
-        print('it exists!')
         all_ids = pd.read_sql("SELECT %s FROM %s" % (id_column, table_name), engine)[id_column].values
 
         for eachID in df[id_column].values:
@@ -52,6 +51,7 @@ def extract_hashtags(extraction, type):
 
 def grab_data(hashtag):
     print('working in #', hashtag, '...', sep='')
+    counter = 0
 
     #define the return array
     ret_array = []
@@ -62,7 +62,7 @@ def grab_data(hashtag):
     d = req['graphql']['hashtag']['edge_hashtag_to_media']
 
     while(d['page_info']['has_next_page']):
-        if len(ret_array) > 20: break
+        if len(ret_array) > 1000: break
 
         for eachNode in d['edges']:
             if not eachNode['node']['is_video']:
@@ -89,6 +89,9 @@ def grab_data(hashtag):
                         'shortcode':  eachNode['node']['shortcode'],
                         'hashtags': hashtags
                     })
+                    counter += 1
+                    if counter % 50 == 0: print('grabbing hashtag... on number', counter)
+
 
                 except Exception as e:
                     print("######## ERROR #############\n",e)
