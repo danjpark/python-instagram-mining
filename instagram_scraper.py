@@ -12,6 +12,26 @@ def db_connection():
         config = json.load(f)
     return create_engine(URL(**config))
 
+def write_to_table(df, table_name, id_column):
+    engine = db_connection()
+
+    # clean up the given df by getting rid of duplicates
+    df = df.drop_duplicates(subset=id_column, keep='first')
+
+    # make sure the ids dont exist already in db
+    does_exists = pd.read_sql("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s');" % table_name, engine)
+    if does_exists['exists'][0]:
+        print('it exists!')
+        all_ids = pd.read_sql("SELECT %s FROM %s" % (id_column, table_name), engine)[id_column].values
+
+        for eachID in df[id_column].values:
+            if eachID in all_ids: df = df[df[id_column] == eachID]
+
+    df.to_sql(table_name,
+              engine,
+              if_exists='append',
+              index=False)
+
 def extract_hashtags(extraction, type):
     # extraction is either a list of comments objects (type == 'comments')
     # or is a string (the descirption) (type == 'string')
@@ -50,10 +70,13 @@ def grab_data(hashtag):
                     # first we grab all the hashtags from the comments
                     shortcode_url = 'https://www.instagram.com/p/%s/?__a=1' % (eachNode['node']['shortcode'])
                     shortcode_req = requests.get(shortcode_url, headers={'user-agent': 'custom'}).json()
+                    caption_hashtags = extract_hashtags(eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text'], 'string')
+
                     if shortcode_req['graphql']['shortcode_media']['edge_media_to_comment']['count'] > 0:
                         comment_hashtags = extract_hashtags(shortcode_req['graphql']['shortcode_media']['edge_media_to_comment']['edges'], 'comments')
-                    caption_hashtags = extract_hashtags(eachNode['node']['edge_media_to_caption']['edges'][0]['node']['text'], 'string')
-                    hashtags = comment_hashtags + caption_hashtags
+                        hashtags = comment_hashtags + caption_hashtags
+                    else:
+                        hashtags = caption_hashtags
 
                     # second we grab all the hashtags from the description (aka caption)
                     ret_array.append({
@@ -79,24 +102,6 @@ def grab_data(hashtag):
 
 
     return pd.DataFrame(ret_array)
-
-def write_to_table(df, table_name, id_column):
-    engine = db_connection()
-
-    # check to see if table already exists
-    does_exists = pd.read_sql("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s');" % table_name, engine)
-    if does_exists['exists'][0]:
-        print('it exists!')
-        all_ids = pd.read_sql("SELECT %s FROM %s" % (id_column, table_name), engine)
-
-        for eachID in all_ids[id_column]:
-            if eachID in df[id_column]: print('it already exists')
-
-
-    # df.to_sql(table_name,
-    #           engine,
-    #           if_exists='append',
-    #           index=False)
 
 def get_users(src_table):
     # move all the shortcodes into a temp table
@@ -138,8 +143,8 @@ def get_users(src_table):
     return(pd.DataFrame(ret_array))
 
 
-# write_to_table(grab_data('cavadoodle'),'danpark')
-write_to_table(get_users('danpark'), 'users', 'id')
+write_to_table(grab_data('cavadoodle'),'cavadoodle', 'shortcode')
+write_to_table(get_users('cavadoodle'), 'users', 'id')
 
 ## TODO:
 ## split getting the hashtags into a different function
