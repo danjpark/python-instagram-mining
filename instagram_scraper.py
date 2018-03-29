@@ -80,12 +80,23 @@ def grab_data(hashtag):
 
     return pd.DataFrame(ret_array)
 
-def write_to_table(df, table_name):
+def write_to_table(df, table_name, id_column):
     engine = db_connection()
-    df.to_sql(table_name,
-              engine,
-              if_exists='append',
-              index=False)
+
+    # check to see if table already exists
+    does_exists = pd.read_sql("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s');" % table_name, engine)
+    if does_exists['exists'][0]:
+        print('it exists!')
+        all_ids = pd.read_sql("SELECT %s FROM %s" % (id_column, table_name), engine)
+
+        for eachID in all_ids[id_column]:
+            if eachID in df[id_column]: print('it already exists')
+
+
+    # df.to_sql(table_name,
+    #           engine,
+    #           if_exists='append',
+    #           index=False)
 
 def get_users(src_table):
     # move all the shortcodes into a temp table
@@ -95,12 +106,14 @@ def get_users(src_table):
     list_of_shortcodes = pd.read_sql('SELECT shortcode FROM %s' % src_table, engine)
     ret_array = []
     list_of_ids = []
+    counter = 0
 
     for shortcode_tuple in list_of_shortcodes.itertuples():
-        shortcode = shortcode_tuple[1]
-        shortcode_url = 'https://www.instagram.com/p/%s/?__a=1' % (shortcode)
-        shortcode_req = requests.get(shortcode_url,
-                                     headers = {'user-agent': 'custom'}).json()
+        if counter % 10 == 0: print("getting users counter:", counter)
+        counter += 1
+        shortcode       = shortcode_tuple[1]
+        shortcode_url   = 'https://www.instagram.com/p/%s/?__a=1' % (shortcode)
+        shortcode_req   = requests.get(shortcode_url,headers = {'user-agent': 'custom'}).json()
 
         owner_info = shortcode_req['graphql']['shortcode_media']['owner']
 
@@ -109,7 +122,7 @@ def get_users(src_table):
         for key in ['blocked_by_viewer',
                     'followed_by_viewer',
                     'has_blocked_viewer',
-                    'is_unpublished', 
+                    'is_unpublished',
                     'requested_by_viewer']:
             owner_info.pop(key, None)
 
@@ -122,12 +135,11 @@ def get_users(src_table):
 
         ret_array.append(owner_info)
 
-    return(pd.DataFrame(own))
+    return(pd.DataFrame(ret_array))
 
 
 # write_to_table(grab_data('cavadoodle'),'danpark')
-get_users('danpark')
-
+write_to_table(get_users('danpark'), 'users', 'id')
 
 ## TODO:
 ## split getting the hashtags into a different function
