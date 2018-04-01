@@ -65,7 +65,7 @@ def grab_data(hashtag):
         if len(ret_array) > 1000: break
 
         for eachNode in d['edges']:
-            if not eachNode['node']['is_video']:
+            if not eachNode['node']['is_video']: 
                 try:
                     # first we grab all the hashtags from the comments
                     shortcode_url = 'https://www.instagram.com/p/%s/?__a=1' % (eachNode['node']['shortcode'])
