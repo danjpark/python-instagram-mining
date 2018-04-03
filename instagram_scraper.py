@@ -65,7 +65,7 @@ def grab_data(hashtag):
         if len(ret_array) > 1000: break
 
         for eachNode in d['edges']:
-            if not eachNode['node']['is_video']: 
+            if not eachNode['node']['is_video']:
                 try:
                     # first we grab all the hashtags from the comments
                     shortcode_url = 'https://www.instagram.com/p/%s/?__a=1' % (eachNode['node']['shortcode'])
@@ -144,7 +144,6 @@ def get_users(src_table):
         ret_array.append(owner_info)
 
     return(pd.DataFrame(ret_array))
-
 
 write_to_table(grab_data('cavadoodle'),'cavadoodle', 'shortcode')
 write_to_table(get_users('cavadoodle'), 'users', 'id')
