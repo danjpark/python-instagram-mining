@@ -10,5 +10,9 @@ def db_connection():
     return create_engine(URL(**config))
 
 engine = db_connection()
-df = pd.read_sql("SELECT * FROM test_table", engine)
-pd.DataFrame(d).to_sql('test_table', engine, if_exists='append', index=False)
+df = pd.read_sql("SELECT hashtags FROM cavadoodle", engine)
+
+count_histogram = {}
+
+for eachArray in df['hashtags']:
+    print(len(eachArray))
