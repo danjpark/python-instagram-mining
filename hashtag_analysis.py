@@ -15,4 +15,7 @@ df = pd.read_sql("SELECT hashtags FROM cavadoodle", engine)
 count_histogram = {}
 
 for eachArray in df['hashtags']:
-    print(len(eachArray))
+    print(eachArray)
+    print(type(eachArray))
+    # for eachString in eachArray:
+    #     print(eachString)
