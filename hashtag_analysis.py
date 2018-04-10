@@ -9,6 +9,9 @@ def db_connection():
         config = json.load(f)
     return create_engine(URL(**config))
 
+def string_to_array(in_array):
+    return in_array
+
 engine = db_connection()
 df = pd.read_sql("SELECT hashtags FROM cavadoodle", engine)
 
