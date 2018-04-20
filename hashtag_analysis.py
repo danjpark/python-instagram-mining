@@ -13,8 +13,6 @@ def string_to_array(in_array):
     return in_array
 
 
-    
-
 engine = db_connection()
 df = pd.read_sql("SELECT hashtags FROM cavadoodle", engine)
 
